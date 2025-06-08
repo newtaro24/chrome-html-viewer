@@ -17,21 +17,24 @@ function connectToMCPServer() {
     const message = JSON.parse(event.data);
     console.log('Received from MCP:', message);
     
+    // Store request_id for response
+    const requestId = message.request_id;
+    
     switch (message.type) {
       case 'get_page_info':
-        await getPageInfo(message.tabId);
+        await getPageInfo(message.tabId, requestId);
         break;
       case 'get_element_styles':
-        await getElementStyles(message.tabId, message.selector);
+        await getElementStyles(message.tabId, message.selector, requestId);
         break;
       case 'get_all_styles':
-        await getAllStyles(message.tabId);
+        await getAllStyles(message.tabId, requestId);
         break;
       case 'inject_css':
-        await injectCSS(message.tabId, message.css);
+        await injectCSS(message.tabId, message.css, requestId);
         break;
       case 'get_screenshot':
-        await getScreenshot(message.tabId);
+        await getScreenshot(message.tabId, requestId);
         break;
     }
   };
@@ -48,7 +51,7 @@ function connectToMCPServer() {
 }
 
 // Get page information including HTML and computed styles
-async function getPageInfo(tabId) {
+async function getPageInfo(tabId, requestId) {
   try {
     const [tab] = tabId ? 
       await chrome.tabs.query({ active: true, currentWindow: true, id: tabId }) :
@@ -94,6 +97,7 @@ async function getPageInfo(tabId) {
     if (results[0].result) {
       ws.send(JSON.stringify({
         type: 'page_info',
+        request_id: requestId,
         data: results[0].result
       }));
     }
@@ -101,13 +105,14 @@ async function getPageInfo(tabId) {
     console.error('Error getting page info:', error);
     ws.send(JSON.stringify({
       type: 'error',
+      request_id: requestId,
       message: error.message
     }));
   }
 }
 
 // Get computed styles for specific elements
-async function getElementStyles(tabId, selector) {
+async function getElementStyles(tabId, selector, requestId) {
   try {
     const [tab] = tabId ? 
       await chrome.tabs.query({ active: true, currentWindow: true, id: tabId }) :
@@ -156,6 +161,7 @@ async function getElementStyles(tabId, selector) {
     if (results[0].result) {
       ws.send(JSON.stringify({
         type: 'element_styles',
+        request_id: requestId,
         selector,
         data: results[0].result
       }));
@@ -164,6 +170,7 @@ async function getElementStyles(tabId, selector) {
     console.error('Error getting element styles:', error);
     ws.send(JSON.stringify({
       type: 'error',
+      request_id: requestId,
       message: error.message
     }));
   }
@@ -247,7 +254,7 @@ async function injectCSS(tabId, css) {
 }
 
 // Take screenshot
-async function getScreenshot(tabId) {
+async function getScreenshot(tabId, requestId) {
   try {
     const [tab] = tabId ? 
       await chrome.tabs.query({ active: true, currentWindow: true, id: tabId }) :
@@ -259,12 +266,14 @@ async function getScreenshot(tabId) {
     
     ws.send(JSON.stringify({
       type: 'screenshot',
+      request_id: requestId,
       data: dataUrl
     }));
   } catch (error) {
     console.error('Error taking screenshot:', error);
     ws.send(JSON.stringify({
       type: 'error',
+      request_id: requestId,
       message: error.message
     }));
   }

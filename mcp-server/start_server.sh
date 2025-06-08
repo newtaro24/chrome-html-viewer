@@ -6,4 +6,4 @@ echo "Press Ctrl+C to stop"
 echo ""
 
 cd "$(dirname "$0")"
-python3 mcp_chrome_server.py
+python3 mcp_integrated_v6.py

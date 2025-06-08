@@ -5,6 +5,11 @@ let connectionStatus = false;
 // Check connection status
 function checkConnection() {
   chrome.runtime.sendMessage({ type: 'check_connection' }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.error('Connection check error:', chrome.runtime.lastError);
+      updateConnectionStatus(false);
+      return;
+    }
     updateConnectionStatus(response && response.connected);
   });
 }
@@ -48,7 +53,11 @@ function addLog(message) {
 // Initialize popup
 document.addEventListener('DOMContentLoaded', () => {
   checkConnection();
-  loadMetrics();
+  
+  // Delay loading metrics to give content script time to initialize
+  setTimeout(() => {
+    loadMetrics();
+  }, 500);
   
   // Check connection every 2 seconds
   setInterval(checkConnection, 2000);
@@ -153,6 +162,11 @@ async function loadMetrics() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   
   chrome.tabs.sendMessage(tab.id, { type: 'get_page_metrics' }, (response) => {
+    if (chrome.runtime.lastError) {
+      console.log('Metrics not available yet:', chrome.runtime.lastError.message);
+      return;
+    }
+    
     if (response) {
       // Update load time
       if (response.performance && response.performance.loadTime) {
@@ -165,6 +179,10 @@ async function loadMetrics() {
         target: { tabId: tab.id },
         func: () => document.querySelectorAll('*').length
       }, (results) => {
+        if (chrome.runtime.lastError) {
+          console.log('Script execution error:', chrome.runtime.lastError);
+          return;
+        }
         if (results && results[0]) {
           document.getElementById('domElements').textContent = results[0].result;
         }
@@ -183,6 +201,10 @@ async function loadMetrics() {
           return count;
         }
       }, (results) => {
+        if (chrome.runtime.lastError) {
+          console.log('Script execution error:', chrome.runtime.lastError);
+          return;
+        }
         if (results && results[0]) {
           document.getElementById('cssRules').textContent = results[0].result;
         }
@@ -193,6 +215,10 @@ async function loadMetrics() {
         target: { tabId: tab.id },
         func: () => document.querySelectorAll('img').length
       }, (results) => {
+        if (chrome.runtime.lastError) {
+          console.log('Script execution error:', chrome.runtime.lastError);
+          return;
+        }
         if (results && results[0]) {
           document.getElementById('images').textContent = results[0].result;
         }

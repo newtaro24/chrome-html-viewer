@@ -478,7 +478,7 @@ function checkContrastIssues() {
       if (el.textContent && el.textContent.trim()) {
         issues.push({
           element: el.tagName,
-          selector: inspector.getSelector(el),
+          selector: getElementSelector(el),
           color,
           backgroundColor: bgColor
         });
@@ -493,7 +493,7 @@ function checkMissingAltText() {
   const images = document.querySelectorAll('img:not([alt])');
   return Array.from(images).map(img => ({
     src: img.src,
-    selector: inspector.getSelector(img)
+    selector: getElementSelector(img)
   }));
 }
 
@@ -513,6 +513,18 @@ function analyzeHeadingStructure() {
   });
   
   return structure;
+}
+
+// Helper function to get element selector
+function getElementSelector(element) {
+  if (element.id) return `#${element.id}`;
+  
+  let selector = element.tagName.toLowerCase();
+  if (element.className) {
+    selector += '.' + element.className.split(' ').filter(c => c).join('.');
+  }
+  
+  return selector;
 }
 
 // Export for use in popup or background script
