@@ -141,7 +141,7 @@ class ChromeBridgeServer:
         finally:
             self.pending_requests.pop(request_id, None)
     
-    async def handle_chrome_message(self, websocket: WebSocketServerProtocol, path: str):
+    async def handle_chrome_message(self, websocket: WebSocketServerProtocol):
         """Handle WebSocket connection from Chrome extension"""
         self.chrome_connection = websocket
         logger.info("Chrome extension connected")
